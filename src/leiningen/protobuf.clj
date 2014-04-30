@@ -37,6 +37,12 @@
   (doto (io/file (:target-path project))
     .mkdirs))
 
+(defn execute [args]
+  (let [result (apply sh/proc args)]
+    (if (= (sh/exit-code result) 0)
+      (sh/stream-to-out result :out)
+      (abort "ERROR:" (sh/stream-to-string result :err)))))
+
 (defn extract-dependencies
   "Extract all files proto depends on into dest."
   [project proto-path protos dest]
@@ -102,9 +108,9 @@
       (fs/chmod "+x" (io/file srcdir "configure"))
       (fs/chmod "+x" (io/file srcdir "install-sh"))
       (println "Configuring protoc")
-      (sh/stream-to-out (sh/proc "./configure" :dir srcdir) :out)
+      (execute ["./configure" :dir srcdir])
       (println "Running 'make'")
-      (sh/stream-to-out (sh/proc "make" :dir srcdir) :out))))
+      (execute ["make" :dir srcdir]))))
 
 (defn compile-protobuf
   "Create .java and .class files from the provided .proto files."
@@ -126,9 +132,7 @@
                               (map #(str "-I" (.getAbsoluteFile %))
                                    [proto-dest proto-path]))]
                (println " > " (join " " args))
-               (let [result (apply sh/proc (concat args [:dir proto-path]))]
-                 (when-not (= (sh/exit-code result) 0)
-                   (abort "ERROR:" (sh/stream-to-string result :err))))))
+               (execute (concat args [:dir proto-path]))))
            (javac (assoc project
                     :java-source-paths [(.getPath dest)]
                     :javac-options ["-Xlint:none"])))))))

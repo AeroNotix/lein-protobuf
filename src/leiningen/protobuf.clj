@@ -7,7 +7,7 @@
   (:require [clojure.java.io :as io]
             [fs.core :as fs]
             [fs.compression :as fs-zip]
-            [conch.core :as sh]))
+            [me.raynes.conch :refer [let-programs]]))
 
 (def cache (io/file (leiningen-home) "cache" "lein-protobuf"))
 (def default-version "2.5.0")
@@ -37,11 +37,13 @@
   (doto (io/file (:target-path project))
     .mkdirs))
 
-(defn execute [args]
-  (let [result (apply sh/proc args)]
-    (if (= (sh/exit-code result) 0)
-      (sh/stream-to-out result :out)
-      (abort "ERROR:" (sh/stream-to-string result :err)))))
+(defn execute [cmd args]
+  (let-programs [command cmd]
+    (let [err (java.io.StringWriter.)
+          args (conj args {:out *out* :err err :verbose true})
+          result ((apply command args) :exit-code)]
+      (when-not (= @result 0)
+        (abort "ERROR:" (str err))))))
 
 (defn extract-dependencies
   "Extract all files proto depends on into dest."
@@ -108,9 +110,9 @@
       (fs/chmod "+x" (io/file srcdir "configure"))
       (fs/chmod "+x" (io/file srcdir "install-sh"))
       (println "Configuring protoc")
-      (execute ["./configure" :dir srcdir])
+      (execute "./configure" [:dir srcdir])
       (println "Running 'make'")
-      (execute ["make" :dir srcdir]))))
+      (execute "make" [:dir srcdir]))))
 
 (defn compile-protobuf
   "Create .java and .class files from the provided .proto files."
@@ -127,12 +129,13 @@
            (.mkdirs dest)
            (extract-dependencies project proto-path protos proto-dest)
            (doseq [proto protos]
-             (let [args (into [(.getPath (protoc project)) proto
-                               (str "--java_out=" (.getAbsoluteFile dest)) "-I."]
+             (let [protoc-path (.getPath (protoc project))
+                   args (into [proto (str "--java_out=" (.getAbsoluteFile dest))
+                               "-I."]
                               (map #(str "-I" (.getAbsoluteFile %))
                                    [proto-dest proto-path]))]
                (println " > " (join " " args))
-               (execute (concat args [:dir proto-path]))))
+               (execute protoc-path (into args [:dir proto-path]))))
            (javac (assoc project
                     :java-source-paths [(.getPath dest)]
                     :javac-options ["-Xlint:none"])))))))

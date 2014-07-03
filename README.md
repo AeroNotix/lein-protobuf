@@ -39,4 +39,4 @@ before that task runs. So if you like, you can simply run:
 
 ## Getting Help
 
-If you have any questions or need help, feel free to use the GitHub issues or reach out to me on Twitter: @mikeflynn_.
+If you have any questions or need help, feel free to use the GitHub issues or reach out to me on Twitter: [@mikeflynn_](http://twitter.com/mikeflynn_).

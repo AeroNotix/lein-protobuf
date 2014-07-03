@@ -57,7 +57,7 @@
               (when (.exists proto-file)
                 (for [line (line-seq (io/reader proto-file))
                       :when (.startsWith line "import")]
-                  (second (re-matches #".*\"(.*)\".*" line)))))]
+                  (second (re-matches (re-pattern ".*\"(.*)\".*") line)))))]
       (loop [deps (mapcat #(dependencies (io/file proto-path %)) protos)]
         (when-let [[dep & deps] (seq deps)]
           (let [proto-file (io/file dest dep)]

@@ -136,7 +136,7 @@
                                "-I."]
                               (map #(str "-I" (.getAbsoluteFile %))
                                    [proto-dest proto-path]))]
-               (println " > " (join " " args))
+               (println protoc-path " > " (join " " args))
                (execute protoc-path (into args [:dir proto-path]))))
            (javac (assoc project
                     :java-source-paths [(.getPath dest)]

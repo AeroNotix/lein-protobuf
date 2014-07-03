@@ -7,7 +7,7 @@
   (:require [clojure.java.io :as io]
             [fs.core :as fs]
             [fs.compression :as fs-zip]
-            [me.raynes.conch :refer [let-programs]]))
+            [me.raynes.conch :refer [let-programs with-programs]]))
 
 (def cache (io/file (leiningen-home) "cache" "lein-protobuf"))
 (def default-version "2.5.0")
@@ -22,7 +22,9 @@
   (io/file cache (str "protobuf-" (version project))))
 
 (defn protoc [project]
-  (io/file (srcdir project) "src" "protoc"))
+  (with-programs [which]
+    (or (io/file (clojure.string/replace (which "protoc") #"\n" ""))
+        (io/file (srcdir project) "src" "protoc"))))
 
 (defn url [project]
   (java.net.URL.

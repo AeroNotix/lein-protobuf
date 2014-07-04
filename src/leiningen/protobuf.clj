@@ -23,8 +23,9 @@
 
 (defn protoc [project]
   (with-programs [which]
-    (or (io/file (clojure.string/replace (which "protoc") #"\n" ""))
-        (io/file (srcdir project) "src" "protoc"))))
+    (let [proto-bin (clojure.string/replace (which "protoc") #"\n" "")]
+      (or (io/file (if (empty? proto-bin) nil proto-bin))
+          (io/file (srcdir project) "src" "protoc")))))
 
 (defn url [project]
   (java.net.URL.
@@ -102,6 +103,17 @@
       (println (format "Unzipping %s to %s" zipfile srcdir))
       (fs-zip/unzip zipfile cache))))
 
+(defn patch-241 [dir]
+  (println "Patching source for Protobuf 2.4.1...")
+  (let [filepath (str dir "/src/google/protobuf/message.cc")]
+    (spit filepath (str "#include <istream>\n" (slurp filepath)))))
+
+(defn mavericks? []
+  (try
+    (with-programs [sw_vers]
+      (.startsWith (sw_vers "-productVersion") "10.9"))
+    (catch Exception e false)))
+
 (defn build-protoc
   "Compile protoc from source."
   [project]
@@ -109,6 +121,7 @@
         protoc (protoc project)]
     (when-not (.exists protoc)
       (fetch project)
+      (when (and (= "2.4.1" (version project)) mavericks?) (patch-241 srcdir))
       (fs/chmod "+x" (io/file srcdir "configure"))
       (fs/chmod "+x" (io/file srcdir "install-sh"))
       (println "Configuring protoc")
@@ -123,7 +136,7 @@
   ([project protos dest]
      (let [target     (target project)
            class-dest (io/file target "classes")
-           proto-dest (io/file target "proto")
+           proto-dest (io/file target "protosrc")
            proto-path (proto-path project)]
        (when (or (> (modtime proto-path) (modtime dest))
                  (> (modtime proto-path) (modtime class-dest)))

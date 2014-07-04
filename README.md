@@ -12,6 +12,10 @@ I forked from [the "official" version](https://github.com/flatland/lein-protobuf
 
 ## Getting started
 
+Download clone the repo, and run the following command in the lein-protobuf directory:
+
+    lein install
+
 Add the following to your `project.clj` file:
 
     :plugins [[lein-protobuf "0.4.2-SNAPSHOT"]]

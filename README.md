@@ -5,7 +5,7 @@ is a Clojure wrapper around the Java protobuf API.
 
 ## Why fork?
 
-I forked from (the "official" version)[https://github.com/flatland/lein-protobuf] from the original for a two key additions:
+I forked from [the "official" version](https://github.com/flatland/lein-protobuf) from the original for a two key additions:
 1. Allow for the use of an already installed version of protoc (the protocol buffer compiler).
 2. Fix an issue with compiling protoc v2.4.1 on Mac OS X 10.9.
 
